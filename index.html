@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>はんたいじゃんけん</title>
+<meta name="description" content="親子で楽しむ「止まる」あそび。かつ・あいこ・まける・いれかわりの4レベルのじゃんけんゲーム。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff7fb; --bg2:#f3edff; --card:#ffffff; --ink:#4a3b55; --sub:#8a7a96;
+  --pink:#ff8fb8; --pink-soft:#ffe1ec; --lav:#a98bff; --lav-soft:#ece5ff;
+  --mint:#5fcfaa; --mint-soft:#dcf7ec; --sky:#6fb6ff; --sky-soft:#dcedff;
+  --sun:#ffc94d; --shadow:0 6px 18px rgba(120,80,160,.13);
+  color-scheme: light;
+}
+@media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Meiryo",sans-serif;
+  color:var(--ink); background:linear-gradient(180deg,var(--bg),var(--bg2));
+  min-height:100dvh; display:flex; justify-content:center;
+}
+.app{width:100%;max-width:480px;padding-block:16px 28px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;min-height:100dvh}
+.screen{display:none;flex-direction:column;flex:1;gap:14px;animation:fade .3s ease}
+.screen.on{display:flex}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:30px;font-weight:900;text-align:center;margin:14px 0 0;letter-spacing:.04em}
+h1 .s{display:block;font-size:14px;font-weight:700;color:var(--sub);letter-spacing:.1em;margin-bottom:4px}
+h2{font-size:20px;font-weight:900;margin:4px 0;text-align:center}
+.hero{font-size:56px;text-align:center;margin:6px 0 0}
+.lead{text-align:center;color:var(--sub);font-size:14px;line-height:1.8;margin:0}
+button{font-family:inherit;color:inherit;border:none;cursor:pointer}
+.btn{background:var(--pink);color:#fff;font-weight:900;font-size:19px;border-radius:999px;padding:16px;box-shadow:var(--shadow);width:100%}
+.btn.lav{background:var(--lav)}
+.btn.ghost{background:var(--card);color:var(--ink);font-size:16px;padding:13px}
+.btn:active{transform:scale(.97)}
+.mode{display:grid;gap:12px}
+.mode button{background:var(--card);border-radius:22px;padding:16px;box-shadow:var(--shadow);text-align:left;display:flex;gap:14px;align-items:center;border:3px solid transparent}
+.mode button.sel{border-color:var(--pink)}
+.mode .ic{font-size:36px}
+.mode b{font-size:18px;display:block}
+.mode small{color:var(--sub);font-size:13px}
+.levels{display:grid;gap:10px}
+.lv{background:var(--card);border-radius:20px;padding:14px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;text-align:left;width:100%}
+.lv .no{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#fff;flex:none}
+.lv b{font-size:17px;display:block}
+.lv small{color:var(--sub);font-size:12.5px}
+.lv .st{margin-left:auto;font-size:15px;white-space:nowrap}
+.lv.lock{opacity:.5}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.speed{display:flex;background:var(--card);border-radius:999px;padding:4px;box-shadow:var(--shadow)}
+.speed button{flex:1;background:none;padding:9px 4px;border-radius:999px;font-size:14px;font-weight:700;color:var(--sub)}
+.speed button.sel{background:var(--lav-soft);color:var(--ink)}
+.label{font-size:13px;color:var(--sub);font-weight:700;margin:4px 4px -6px}
+.foot{margin-top:auto;padding-top:14px;font-size:11px;color:var(--sub);text-align:center;line-height:1.7}
+
+/* game */
+.top{display:flex;align-items:center;gap:10px}
+.top .x{background:var(--card);border-radius:999px;width:40px;height:40px;font-size:18px;box-shadow:var(--shadow);flex:none}
+.prog{flex:1;height:14px;background:#fff;border-radius:999px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.08)}
+.prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--lav));border-radius:999px;transition:width .3s}
+.cnt{font-weight:900;font-size:14px;min-width:44px;text-align:right}
+.order{border-radius:22px;padding:12px;text-align:center;font-weight:900;font-size:24px;box-shadow:var(--shadow);transition:background .2s}
+.order small{display:block;font-size:13px;font-weight:700;opacity:.8}
+.order.win{background:var(--pink-soft)}
+.order.draw{background:var(--sun);background:#fff3cc}
+.order.lose{background:var(--sky-soft)}
+.opp{background:var(--card);border-radius:28px;box-shadow:var(--shadow);height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.opp .who{position:absolute;top:10px;left:14px;font-size:13px;color:var(--sub);font-weight:700}
+#oppIn{text-align:center}
+.opp .hand{font-size:96px;line-height:1}
+.opp .say{font-size:40px;font-weight:900;color:var(--lav)}
+.opp .nm{font-size:16px;font-weight:900;margin-top:4px}
+.pop{animation:pop .35s cubic-bezier(.3,1.6,.6,1)}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+.timer{height:8px;background:#fff;border-radius:999px;overflow:hidden}
+.timer i{display:block;height:100%;width:100%;background:var(--mint);border-radius:999px}
+.hands{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.hands button{background:var(--card);border-radius:24px;padding:14px 0 10px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;gap:2px;border:3px solid transparent;transition:transform .1s}
+.hands button span{font-size:52px;line-height:1.1}
+.hands button b{font-size:15px}
+.hands button:active{transform:scale(.94)}
+.hands button.hint{border-color:var(--mint);animation:hint 1s ease infinite}
+.hands button.ok{border-color:var(--mint);background:var(--mint-soft)}
+.hands button.dim{opacity:.35}
+.hands.off{pointer-events:none}
+@keyframes hint{50%{box-shadow:0 0 0 6px rgba(95,207,170,.25)}}
+.fb{min-height:58px;text-align:center;font-weight:900;font-size:22px;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.fb small{font-size:13px;color:var(--sub);font-weight:700}
+.fb.good{color:#e0578b}
+.fb.soft{color:var(--lav)}
+.praise{background:#fffbe8;border:2px dashed var(--sun);border-radius:20px;padding:10px 14px;text-align:center;display:none}
+.praise.on{display:block;animation:fade .3s}
+.praise small{font-size:12px;color:var(--sub);font-weight:700}
+.praise p{margin:2px 0 0;font-size:19px;font-weight:900}
+
+/* result */
+.big{font-size:64px;text-align:center;margin:10px 0 0}
+.score{background:var(--card);border-radius:24px;padding:18px;box-shadow:var(--shadow);text-align:center}
+.score .n{font-size:44px;font-weight:900;color:#e0578b}
+.score p{margin:4px 0 0;color:var(--sub);font-size:14px}
+.stamps{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px;font-size:26px;min-height:30px}
+.stamps span{animation:pop .4s backwards}
+.book{background:var(--card);border-radius:24px;padding:16px;box-shadow:var(--shadow)}
+.book .grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:8px}
+.book .grid i{aspect-ratio:1;border-radius:50%;background:var(--lav-soft);display:grid;place-items:center;font-style:normal;font-size:15px}
+.book .t{display:flex;justify-content:space-between;font-weight:900}
+.book .t small{color:var(--sub);font-weight:700}
+.unlock{text-align:center;font-weight:900;color:var(--lav);font-size:16px}
+.guide{background:var(--card);border-radius:22px;padding:16px;box-shadow:var(--shadow);font-size:14.5px;line-height:1.85}
+.guide b{color:#e0578b}
+.guide ul{margin:6px 0 0;padding-left:1.2em}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ホーム -->
+  <section class="screen on" id="home">
+    <h1><span class="s">親子で楽しむ「止まる」あそび</span>はんたいじゃんけん</h1>
+    <div class="hero">✊✌️✋</div>
+    <p class="lead">いつものじゃんけんの「出したい！」を<br>ちょっと止めて、ルールどおりに出すあそびです。</p>
+
+    <div class="label">だれとあそぶ？</div>
+    <div class="mode">
+      <button id="mSolo" class="sel"><span class="ic">🧒</span><span><b>ひとりであそぶ</b><small>じぶんのペースで</small></span></button>
+      <button id="mPair"><span class="ic">👩‍👧</span><span><b>おやこであそぶ</b><small>おうちの人が「ほめことば」をよみあげます</small></span></button>
+    </div>
+
+    <div class="label">はやさ</div>
+    <div class="speed" id="speed">
+      <button data-s="0" class="sel">🐢 ゆっくり</button>
+      <button data-s="1">🐰 ふつう</button>
+      <button data-s="2">🐆 はやい</button>
+    </div>
+
+    <button class="btn" id="toLevels">あそぶ</button>
+    <div class="row">
+      <button class="btn ghost" id="toBook">🌟 シールちょう</button>
+      <button class="btn ghost" id="toGuide">📖 おうちの方へ</button>
+    </div>
+    <p class="foot">このアプリは医療・治療を目的としたものではありません。<br>お子さんのことで心配なことは、医師や専門機関にご相談ください。</p>
+  </section>
+
+  <!-- レベル選択 -->
+  <section class="screen" id="levels">
+    <div class="top"><button class="x" data-go="home">←</button><h2 style="flex:1">どれであそぶ？</h2><span style="width:40px"></span></div>
+    <p class="lead">1から じゅんばんに。<br>6こ できたら つぎが ひらくよ。</p>
+    <div class="levels" id="lvList"></div>
+  </section>
+
+  <!-- ゲーム -->
+  <section class="screen" id="game">
+    <div class="top">
+      <button class="x" id="quit">✕</button>
+      <div class="prog"><i id="prog"></i></div>
+      <span class="cnt" id="cnt">1/10</span>
+    </div>
+    <div class="order win" id="order">かってね！<small>あいてに かつ手を出そう</small></div>
+    <div class="opp" id="opp">
+      <span class="who">あいて</span>
+      <div id="oppIn"></div>
+    </div>
+    <div class="timer"><i id="timer"></i></div>
+    <div class="hands off" id="hands">
+      <button data-h="0"><span>✊</span><b>グー</b></button>
+      <button data-h="1"><span>✌️</span><b>チョキ</b></button>
+      <button data-h="2"><span>✋</span><b>パー</b></button>
+    </div>
+    <div class="fb" id="fb"></div>
+    <div class="praise" id="praise"><small>📣 おうちの人が よみあげてね</small><p id="praiseTx"></p></div>
+  </section>
+
+  <!-- 結果 -->
+  <section class="screen" id="result">
+    <div class="big" id="rBig">🎉</div>
+    <h2 id="rTitle">さいごまで できたね！</h2>
+    <div class="score">
+      <div>「止まれた！」のかず</div>
+      <div class="n" id="rN">0</div>
+      <p id="rMsg"></p>
+      <div class="stamps" id="rStamps"></div>
+    </div>
+    <div class="praise on" id="rPraise"><small>📣 おうちの人が よみあげてね</small><p id="rPraiseTx"></p></div>
+    <div class="unlock" id="rUnlock"></div>
+    <button class="btn" id="again">もういちど</button>
+    <button class="btn lav" id="next">つぎのレベルへ</button>
+    <button class="btn ghost" data-go="home">おわる</button>
+  </section>
+
+  <!-- シール帳 -->
+  <section class="screen" id="book">
+    <div class="top"><button class="x" data-go="home">←</button><h2 style="flex:1">シールちょう</h2><span style="width:40px"></span></div>
+    <p class="lead">「止まれた！」1かいで シール1まい。<br>50まいで 1ページ うまるよ。</p>
+    <div id="bookIn"></div>
+  </section>
+
+  <!-- おうちの方へ -->
+  <section class="screen" id="guide">
+    <div class="top"><button class="x" data-go="home">←</button><h2 style="flex:1">おうちの方へ</h2><span style="width:40px"></span></div>
+    <div class="guide">
+      <b>どんなあそび？</b><br>
+      「出したい手」をいったん止めて、ルールどおりの手を選ぶじゃんけんです。研究で使われる「止まる課題」をヒントに、親子で楽しめる形にしました。
+    </div>
+    <div class="guide">
+      <b>4つのレベル</b>
+      <ul>
+        <li>1　かってね（ふつうのじゃんけん）</li>
+        <li>2　あいこにしてね（同じ手を出す）</li>
+        <li>3　まけてね（わざと負ける）</li>
+        <li>4　いれかわり（合図で「かつ・まける」が変わる）</li>
+      </ul>
+      必ずできるレベル1から始めてください。2回続けてうまくいかないと、答えがそっと光ります。
+    </div>
+    <div class="guide">
+      <b>あそぶときのコツ</b>
+      <ul>
+        <li>1回は1〜3分。短くてOKです</li>
+        <li>点数より「止まろうとしたこと」をほめてください</li>
+        <li>イヤな日・つかれた日は、やらなくて大丈夫です</li>
+        <li>「おやこであそぶ」にすると、画面にほめことばが出ます。読むだけでOKです</li>
+      </ul>
+    </div>
+    <div class="guide" style="font-size:12.5px;color:var(--sub)">
+      このアプリは医療・治療を目的としたものではなく、効果を約束するものでもありません。お子さんの状態について心配なことは、医師や専門機関にご相談ください。記録はこの端末の中だけに保存され、個人情報は集めていません。
+    </div>
+  </section>
+
+</div>
+
+<script>
+(() => {
+  const H = [{e:'✊',n:'グー'},{e:'✌️',n:'チョキ'},{e:'✋',n:'パー'}];
+  // h が勝つ相手: 0グー→1チョキ, 1チョキ→2パー, 2パー→0グー
+  const beats = h => (h+1)%3;          // h が勝てる手
+  const winAgainst = o => (o+2)%3;     // o に勝つ手
+  const loseAgainst = o => (o+1)%3;    // o に負ける手
+
+  const LEVELS = [
+    {t:'かってね',   d:'ふつうのじゃんけん', c:'var(--pink)', rule:'win'},
+    {t:'あいこにしてね', d:'あいてと おなじ手を出す', c:'#f2b52e', rule:'draw'},
+    {t:'まけてね',   d:'わざと まける手を出す', c:'var(--sky)', rule:'lose'},
+    {t:'いれかわり', d:'あいずで かつ・まけるが かわる', c:'var(--lav)', rule:'mix'},
+  ];
+  const ORDER = {
+    win:{cls:'win', t:'かってね！', s:'あいてに かつ手を出そう'},
+    draw:{cls:'draw',t:'あいこにしてね！', s:'あいてと おなじ手を出そう'},
+    lose:{cls:'lose',t:'まけてね！', s:'あいてに まける手を出そう'},
+  };
+  const SPEED = [6000, 4000, 2600];
+  const N = 10, UNLOCK = 6;
+
+  const PRAISE_OK = [
+    'いま、ちゃんと止まれたね！','出したい手を がまんできたね','よく見て えらべたね',
+    'すごい集中してたね','ルールを おぼえてるね！','あわてずに できたね',
+    'その調子だよ','いまの、かっこよかった！','ちゃんと考えてたね','止まる力、つかえてるね',
+  ];
+  const PRAISE_MISS = [
+    '止まろうとしたの、見てたよ','おしかったね、つぎいこう','むずかしいのに がんばってるね',
+    'まちがえても だいじょうぶ','チャレンジしてるのが いいね',
+  ];
+  const PRAISE_END = [
+    'さいごまで あそべたね。うれしいな','いっしょに あそべて たのしかったよ',
+    'がんばってる顔、ステキだったよ','止まろうとする力、ちゃんと育ってるね',
+  ];
+  const pick = a => a[Math.floor(Math.random()*a.length)];
+
+  // --- 保存（端末内のみ） ---
+  const store = {
+    get(){ try{ return JSON.parse(localStorage.getItem('hantaiJanken')||'{}'); }catch(e){ return {}; } },
+    set(v){ try{ localStorage.setItem('hantaiJanken', JSON.stringify(v)); }catch(e){} },
+  };
+  let save = Object.assign({best:[0,0,0,0], stamps:0, speed:0, pair:false}, store.get());
+
+  // --- 音（やさしい音だけ） ---
+  let ac;
+  function tone(freqs, dur=.12, type='sine', vol=.12){
+    try{
+      ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+      freqs.forEach((f,i)=>{
+        const o=ac.createOscillator(), g=ac.createGain(), t=ac.currentTime+i*dur;
+        o.type=type; o.frequency.value=f;
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.02);
+        g.gain.exponentialRampToValueAtTime(.001,t+dur*1.8);
+        o.connect(g).connect(ac.destination); o.start(t); o.stop(t+dur*2);
+      });
+    }catch(e){}
+  }
+  const sOk = () => tone([784,988,1319],.09,'triangle');
+  const sMiss = () => tone([523,494],.14,'sine',.07);
+  const sTick = () => tone([660],.07,'sine',.05);
+
+  // --- 画面切り替え ---
+  const $ = id => document.getElementById(id);
+  function go(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id));
+    if(id==='levels') renderLevels();
+    if(id==='book') renderBook();
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{ stopGame(); go(b.dataset.go); });
+
+  // --- ホーム ---
+  function setMode(p){ save.pair=p; store.set(save); $('mSolo').classList.toggle('sel',!p); $('mPair').classList.toggle('sel',p); }
+  $('mSolo').onclick=()=>setMode(false);
+  $('mPair').onclick=()=>setMode(true);
+  setMode(save.pair);
+  document.querySelectorAll('#speed button').forEach(b=>{
+    b.classList.toggle('sel', +b.dataset.s===save.speed);
+    b.onclick=()=>{ save.speed=+b.dataset.s; store.set(save);
+      document.querySelectorAll('#speed button').forEach(x=>x.classList.toggle('sel',x===b)); };
+  });
+  $('toLevels').onclick=()=>go('levels');
+  $('toBook').onclick=()=>go('book');
+  $('toGuide').onclick=()=>go('guide');
+
+  const unlocked = i => i===0 || save.best[i-1]>=UNLOCK;
+  function renderLevels(){
+    const box=$('lvList'); box.innerHTML='';
+    LEVELS.forEach((L,i)=>{
+      const ok=unlocked(i), b=document.createElement('button');
+      b.className='lv'+(ok?'':' lock');
+      const best=save.best[i];
+      b.innerHTML=`<span class="no" style="background:${L.c}">${i+1}</span>
+        <span><b>${L.t}</b><small>${L.d}</small></span>
+        <span class="st">${ok ? (best?'🌟 '+best+'/10':'') : '🔒'}</span>`;
+      b.onclick=()=>{ if(ok) startGame(i); else flashLock(b); };
+      box.appendChild(b);
+    });
+  }
+  function flashLock(b){ b.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:260}); }
+
+  function renderBook(){
+    const total=save.stamps, pages=Math.max(1,Math.ceil((total+1)/50));
+    let h='';
+    for(let p=0;p<pages;p++){
+      const n=Math.min(50, Math.max(0,total-p*50));
+      h+=`<div class="book" style="margin-bottom:12px"><div class="t">${p+1}ページめ <small>${n}/50</small></div><div class="grid">`;
+      const icons=['🌸','⭐','💜','🍓','🌈'];
+      for(let k=0;k<50;k++) h+=`<i>${k<n?icons[(p*50+k)%icons.length]:''}</i>`;
+      h+='</div></div>';
+    }
+    $('bookIn').innerHTML=`<div class="score" style="margin-bottom:12px"><div>あつめたシール</div><div class="n">${total}</div></div>`+h;
+  }
+
+  // --- ゲーム ---
+  let G=null, timers=[];
+  const later=(fn,ms)=>{ const t=setTimeout(fn,ms); timers.push(t); return t; };
+  function stopGame(){ timers.forEach(clearTimeout); timers=[]; if(G&&G.raf) cancelAnimationFrame(G.raf); G=null; }
+
+  function startGame(lv){
+    stopGame();
+    G={lv, q:0, ok:0, miss2:0, results:[], raf:0};
+    go('game');
+    $('praise').classList.remove('on');
+    nextQ();
+  }
+
+  function ruleFor(lv){ const r=LEVELS[lv].rule; return r==='mix' ? (Math.random()<.5?'win':'lose') : r; }
+  function answerFor(rule,o){ return rule==='win'?winAgainst(o): rule==='lose'?loseAgainst(o): o; }
+
+  function nextQ(){
+    if(!G) return;
+    if(G.q>=N) return finish();
+    const q=G.q;
+    $('cnt').textContent=`${q+1}/${N}`;
+    $('prog').style.width=(q/N*100)+'%';
+    $('fb').textContent=''; $('fb').className='fb';
+    $('praise').classList.remove('on');
+    const hands=$('hands'); hands.classList.add('off');
+    hands.querySelectorAll('button').forEach(b=>b.className='');
+    $('timer').style.transition='none'; $('timer').style.width='100%';
+
+    const rule=ruleFor(G.lv);
+    G.rule=rule;
+    const O=ORDER[rule], od=$('order');
+    od.className='order '+O.cls;
+    od.innerHTML=`${O.t}<small>${O.s}</small>`;
+    if(LEVELS[G.lv].rule==='mix'){ od.classList.remove('pop'); void od.offsetWidth; od.classList.add('pop'); }
+
+    // じゃん・けん・ぽん
+    const inEl=$('oppIn');
+    const say=(t)=>{ inEl.innerHTML=`<div class="say pop">${t}</div>`; sTick(); };
+    say('じゃん'); later(()=>say('けん'),450); later(()=>{
+      const o=Math.floor(Math.random()*3);
+      G.o=o; G.ans=answerFor(rule,o);
+      inEl.innerHTML=`<div class="hand pop">${H[o].e}</div><div class="nm">${H[o].n}</div>`;
+      hands.classList.remove('off');
+      G.open=true; G.t0=performance.now();
+      if(G.miss2>=2) hands.querySelector(`[data-h="${G.ans}"]`).classList.add('hint');
+      runTimer();
+    },900);
+  }
+
+  function runTimer(){
+    const dur=SPEED[save.speed], bar=$('timer');
+    const step=()=>{
+      if(!G||!G.open) return;
+      const r=1-(performance.now()-G.t0)/dur;
+      bar.style.width=Math.max(0,r*100)+'%';
+      bar.style.background = r>.35 ? 'var(--mint)' : 'var(--sun)';
+      if(r<=0) return answer(-1);
+      G.raf=requestAnimationFrame(step);
+    };
+    G.raf=requestAnimationFrame(step);
+  }
+
+  $('hands').querySelectorAll('button').forEach(b=>b.onclick=()=>answer(+b.dataset.h));
+
+  function answer(h){
+    if(!G||!G.open) return;
+    G.open=false; cancelAnimationFrame(G.raf);
+    const hands=$('hands'); hands.classList.add('off');
+    const good = h===G.ans;
+    hands.querySelectorAll('button').forEach(b=>{
+      const v=+b.dataset.h;
+      b.className = v===G.ans ? 'ok' : 'dim';
+    });
+    const fb=$('fb');
+    if(good){
+      G.ok++; G.miss2=0; sOk();
+      const words = G.rule==='win' ? 'できたね！' : '止まれたね！';
+      fb.className='fb good'; fb.innerHTML=`${pick(['やったね','いいね','すごい'])}！ ${words}`;
+    }else{
+      G.miss2++; sMiss();
+      fb.className='fb soft';
+      fb.innerHTML = h<0
+        ? `ゆっくりで だいじょうぶ<small>こたえは ${H[G.ans].n} だったよ</small>`
+        : `おしい！ 止まろうとしたね！<small>こたえは ${H[G.ans].n} だよ</small>`;
+    }
+    G.results.push(good);
+    let wait=1300;
+    if(save.pair){
+      $('praiseTx').textContent = good ? pick(PRAISE_OK) : pick(PRAISE_MISS);
+      $('praise').classList.add('on'); wait=2400;
+    }
+    G.q++;
+    $('prog').style.width=(G.q/N*100)+'%';
+    later(nextQ, wait);
+  }
+  $('quit').onclick=()=>{ stopGame(); go('levels'); };
+
+  function finish(){
+    const lv=G.lv, ok=G.ok;
+    const wasLocked = lv<3 && !unlocked(lv+1);
+    save.best[lv]=Math.max(save.best[lv], ok);
+    save.stamps+=ok; store.set(save);
+    const nowOpen = lv<3 && unlocked(lv+1);
+
+    $('rN').textContent=ok;
+    $('rBig').textContent = ok>=8?'🎉':ok>=5?'🌈':'🌱';
+    $('rTitle').textContent='さいごまで できたね！';
+    $('rMsg').textContent = ok>=8 ? 'たくさん止まれたね。すごい！'
+      : ok>=5 ? 'いっぱい チャレンジできたね'
+      : 'むずかしいのに がんばったね。ためしたことが 大事だよ';
+    $('rStamps').innerHTML=G.results.map((g,i)=>g?`<span style="animation-delay:${i*.08}s">🌸</span>`:'').join('');
+    $('rPraise').style.display = save.pair ? 'block':'none';
+    $('rPraiseTx').textContent = pick(PRAISE_END);
+    $('rUnlock').textContent = (wasLocked && nowOpen) ? `🔓 レベル${lv+2}「${LEVELS[lv+1].t}」が ひらいたよ！` : '';
+    $('next').style.display = nowOpen ? 'block':'none';
+    $('again').onclick=()=>startGame(lv);
+    $('next').onclick=()=>startGame(lv+1);
+    G=null;
+    go('result');
+    if(ok) tone([659,784,988,1319],.11,'triangle');
+  }
+})();
+</script>
+
+</body>
+</html>
